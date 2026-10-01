@@ -1,0 +1,16 @@
+{
+  "titleId": "PPSA08668",
+  "contentId": "SYNTHETIC-PPSA08668",
+  "contentVersion": "01.000.000",
+  "pubtools": {
+    "creationDate": "2026-10-01 00:00:00"
+  },
+  "localizedParameters": {
+    "ru-RU": {
+      "titleName": "Тест"
+    },
+    "vi-VN": {
+      "titleName": "Kiểm thử"
+    }
+  }
+}

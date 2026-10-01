@@ -1,0 +1,2 @@
+# Preserve exact source bytes so the SHA256 manifest survives checkout.
+* -text
