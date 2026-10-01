@@ -1,5 +1,7 @@
 # Metadata và rollback
 
+**Tiếng Việt** · [English](RECOVERY.en.md)
+
 Payload ưu tiên package nội bộ, sau đó quét `/mnt/ext0/user/app` đến `/mnt/ext15/user/app`. Với ổ ngoài, alias `/user/app/<title>` trỏ về thư mục source bằng nullfs RW. Ownership marker nằm tại `/data/ps5_storage_restore/owned/<title>`.
 
 Trước khi thay `param.json` khác nội dung, payload kiểm tra JSON hợp lệ và khớp cả titleId, contentId, contentVersion. Backup được ghi O_EXCL, fsync, đối chiếu nguyên byte và ghi journal trước khi thay bằng rename. Không ghi đè backup đã có. Lỗi trước bước thay giữ param cũ; backup được giữ nếu bước sau lỗi.
