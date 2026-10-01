@@ -1,8 +1,12 @@
 # PS5 Storage Restore 1.3 EN/VI
 
+**Tiếng Việt** · [English](README.en.md)
+
 Khôi phục đăng ký game PS5 đã cài trên bộ nhớ trong và SSD M.2 sau khi mất/reset database. Payload quét `PPSAxxxxx/app.pkg`, dựng metadata còn thiếu, tạo alias nullfs cho ổ ngoài và đăng ký qua API AppInst của hệ thống.
 
 **Bản quyền NGÔ PHI PHƯƠNG x PSVIETHOA.COM**
+
+Tải về: [Releases](../../releases) — `PS5_STORAGE_RESTORE.elf`, SHA256 `35d88926d143097136898ee2318c63f313992c1bb394df78f306cd49e390d5e2`.
 
 ## Bản fix 1.3
 
