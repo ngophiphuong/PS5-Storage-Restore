@@ -1,0 +1,1 @@
+These JSON fixtures are synthetic test data authored for this repository. They contain no extracted game metadata. The PPSA identifiers exercise the production host harness; SYNTHETIC content IDs are deliberately not installable games.

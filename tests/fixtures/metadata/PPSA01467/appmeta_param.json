@@ -1,0 +1,17 @@
+{
+  "titleId": "PPSA01467",
+  "contentId": "SYNTHETIC-PPSA01467",
+  "contentVersion": "01.000.000",
+  "pubtools": {
+    "creationDate": "2026-10-01 00:00:01"
+  },
+  "localizedParameters": {
+    "ru-RU": {
+      "titleName": "Тест"
+    },
+    "vi-VN": {
+      "titleName": "Kiểm thử"
+    }
+  },
+  "sdkVersion": "0x0900000000000000"
+}

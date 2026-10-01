@@ -1,0 +1,70 @@
+{
+  "copyright": "NGÔ PHI PHƯƠNG x PSVIETHOA.COM",
+  "scope": "Recovery fix 1.3 only",
+  "baseline_console_verification": {
+    "version": "1.3-EN-VI-streaming-fix",
+    "elf_sha256": "9eab8e6d5bfb5147e4428ed145b676a861a979fc5869f8a67afd6ccd21841f9e",
+    "console_runtime_verified": true,
+    "native_registration_verified": true,
+    "registered": 21,
+    "found": 21,
+    "skipped": 0,
+    "created": 24,
+    "updated": 1,
+    "database_integrity": {
+      "app.db": "ok",
+      "appinfo.db": "ok"
+    },
+    "game_launch_verified": false,
+    "ui_screenshot_verified": false,
+    "reboot_verified": false,
+    "tested_on": "PS5 Pro, firmware 10.01",
+    "tested_at": "2026-10-01",
+    "titles": {
+      "PPSA08668": {
+        "title": "FINAL FANTASY VII REBIRTH",
+        "native_register_rc": "0x00000000",
+        "mode": "external-nullfs",
+        "metadata_path": "/user/appmeta/PPSA08668",
+        "database_size": 153216221184,
+        "param_three_locations_match_pkg": true,
+        "ownership_marker_verified": true
+      },
+      "PPSA01467": {
+        "title": "Marvel's Spider-Man Remastered",
+        "native_register_rc": "0x00000000",
+        "mode": "external-nullfs",
+        "metadata_path": "/user/appmeta/PPSA01467",
+        "database_size": 71809892352,
+        "param_three_locations_match_pkg": true,
+        "ownership_marker_verified": true
+      }
+    }
+  },
+  "current_publication": {
+    "elf_sha256": "35d88926d143097136898ee2318c63f313992c1bb394df78f306cd49e390d5e2",
+    "elf_bytes": 181712,
+    "offline_build_verified": true,
+    "console_runtime_verified": false,
+    "game_launch_verified": false,
+    "source_logic_matches_console_tested_fix": true,
+    "changes_from_runtime_tested_source": [
+      "Copyright headers and runtime credit text",
+      "Portable SDK default path"
+    ],
+    "source_sha256": {
+      "src/pkg_reader.h": "40eed37d41b4a3792e044714106754d7509b3fa28e5fcfc31aa8c8da30853ed9",
+      "src/restore_metadata.h": "d402da9486e650a676b912203394b279940d1f24a2861e81308a7ffc46eb75bc",
+      "src/storage_restore.c": "126f71cdb73d35c05c48f78d39afcd4aa2dfbebfa00d45e31f86de229f0d2cfd"
+    }
+  },
+  "original_offline_checks": {
+    "parser": 32,
+    "metadata": 14,
+    "real_pkg_replay": 2
+  },
+  "public_reproducible_checks": {
+    "synthetic_parser": 23,
+    "synthetic_metadata": 14
+  }
+}
