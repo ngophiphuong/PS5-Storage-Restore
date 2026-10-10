@@ -59,9 +59,22 @@ with tempfile.TemporaryDirectory(prefix='metadata-test-', dir=ROOT / 'build') as
     case('missing param created', 'param', sp, None, True)
     case('identical param unchanged', 'param', ff, ff, True)
     case('preflight makes no changes', 'preflight', ff, ff_old, True)
-    for key, value in [('titleId','PPSA99999'), ('contentId','DIFFERENT_CONTENT'), ('contentVersion','99.000.000')]:
+    for key, value in [('titleId','PPSA99999'), ('contentId','DIFFERENT_CONTENT')]:
         obj = json.loads(ff); obj[key] = value
         case('reject different '+key, 'param', ff, json.dumps(obj).encode(), False)
+    # ASTRO BOT PPSA21567 on the test console: a game update raised contentVersion
+    # 01.018.000 -> 01.019.000 and left the M.2 sidecar behind. 1.3 refused that
+    # sidecar and skipped the title; 1.4 syncs it forward and never downgrades.
+    def with_version(v):
+        obj = json.loads(ff); obj['contentVersion'] = v
+        return json.dumps(obj).encode()
+    newer, older = with_version('01.019.000'), with_version('01.018.000')
+    case('stale sidecar after a game update is synced forward', 'param', newer, older, True, replace=True)
+    case('reject downgrade when the sidecar is newer', 'param', older, newer, False)
+    case('reject downgrade in a later group', 'param', with_version('01.019.000'), with_version('01.019.001'), False)
+    case('equal version written in fewer groups accepted', 'param', newer, with_version('01.019'), True, replace=True)
+    for bad in ['', '01.019.00a', '01..019', '1.2.3.4.5.6.7.8.9', '..', ' 01.019.000']:
+        case('reject unparsable contentVersion %r' % bad, 'param', newer, with_version(bad), False)
     case('reject invalid existing JSON', 'param', ff, b'{invalid', False)
     case('reject trailing non-JSON bytes', 'param', ff+b' garbage', ff_old, False)
     case('rename failure preserves old and backup', 'fail-rename', ff, ff_old, False, replace=True)
@@ -78,6 +91,6 @@ with tempfile.TemporaryDirectory(prefix='metadata-test-', dir=ROOT / 'build') as
     assert p.returncode==0,(p.stdout,p.stderr)
     assert dst.stat().st_size==src.stat().st_size and digest(dst)==digest(src)
     results.append({'case':'stream 65 MiB plus final partial chunk', 'bytes':src.stat().st_size,'sha256':digest(dst),'passed':True})
-(ROOT/'METADATA_TEST_RESULTS_1.3.json').write_text(json.dumps({'passed':len(results),'cases':results,
+(ROOT/'METADATA_TEST_RESULTS_1.4.json').write_text(json.dumps({'passed':len(results),'cases':results,
     'scope':'Production C functions + json-c 0.19, original synthetic metadata; Windows regular-file POSIX rename shim. No console mount/launch.'},indent=2),encoding='utf-8')
 print('PASS:',len(results),'metadata regression cases')

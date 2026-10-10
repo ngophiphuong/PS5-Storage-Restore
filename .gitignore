@@ -15,6 +15,6 @@ __pycache__/
 *.zip
 /.publish/
 /TEST_RESULTS.json
-/METADATA_TEST_RESULTS_1.3.json
+/METADATA_TEST_RESULTS_*.json
 /BUILD.json
 /sdk/

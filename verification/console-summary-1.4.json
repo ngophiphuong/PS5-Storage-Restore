@@ -1,0 +1,58 @@
+{
+  "copyright": "NGÔ PHI PHƯƠNG x PSVIETHOA.COM",
+  "scope": "Recovery fix 1.4 only",
+  "console_verification": {
+    "version": "1.4-EN-VI-streaming-fix",
+    "elf_sha256": "d61a3864e647f09965aa0d0675b99f0b5110fbe52bdf5b6ee6db7dd5dd25f2f7",
+    "elf_bytes": 181712,
+    "elf_built_from_this_source": true,
+    "console_runtime_verified": true,
+    "native_registration_verified": true,
+    "registered": 21,
+    "found": 21,
+    "skipped": 0,
+    "created": 6,
+    "updated": 1,
+    "database_integrity": {
+      "app.db": "ok",
+      "appinfo.db": "ok"
+    },
+    "game_launch_verified": false,
+    "ui_screenshot_verified": false,
+    "reboot_verified": false,
+    "autoload_modified": false,
+    "tested_on": "PS5 Pro, firmware 10.01",
+    "tested_at": "2026-10-10",
+    "fixed_title": {
+      "titleId": "PPSA21567",
+      "problem": "1.3 skipped it: sce_sys/param.json left at contentVersion 01.018.000 after the package was updated to 01.019.000",
+      "log": "PARAM_VERSION existing=01.018.000 package=01.019.000 package-newer",
+      "native_register_rc": "0x00000000",
+      "mode": "external-nullfs",
+      "package_param_sha256": "a7deb8fb3de5f3d207238298c633603e1469b0e90fc7b61635411c9369b685f9",
+      "param_three_locations_match_pkg": true,
+      "replaced_sidecar_sha256": "0838265697f94a2e1c3f2d9bd8c2a8c05030d22e0a6217fb4193211fe61da3ec",
+      "backup_byte_exact": true,
+      "alias_pkg_bytes": 39469187072,
+      "other_titles_param_unchanged": true
+    }
+  },
+  "baseline_1_3": {
+    "elf_sha256": "9eab8e6d5bfb5147e4428ed145b676a861a979fc5869f8a67afd6ccd21841f9e",
+    "tested_at": "2026-10-01",
+    "registered": 21,
+    "found": 21,
+    "skipped": 0,
+    "note": "Built before the copyright line was edited; same console."
+  },
+  "public_reproducible_checks": {
+    "synthetic_parser": 23,
+    "synthetic_metadata": 23
+  },
+  "original_offline_checks": {
+    "parser": 32,
+    "metadata": 14,
+    "real_pkg_replay": 2
+  },
+  "privacy": "No database, console log, token, game file or extracted game metadata is included in this repository."
+}
