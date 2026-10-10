@@ -62,7 +62,7 @@ sdk.run([sdk.tool('ld.lld'), *sdk.link_flags(), '-Map=' + str(OUT / 'payload.map
 sdk.verify_elf(debug)
 sdk.run([sdk.tool('llvm-strip'), '--strip-all', '-o', elf, debug])
 manifest = sdk.verify_elf(elf)
-manifest.update(version='1.3-EN-VI-streaming-fix', compiler=subprocess.check_output([sdk.tool('clang'), '--version'], text=True).strip(),
+manifest.update(version='1.4-EN-VI-streaming-fix', compiler=subprocess.check_output([sdk.tool('clang'), '--version'], text=True).strip(),
     sdk_asset='pacbrew-repo/v0.40.2/ps5-payload-dev.tar.gz',
     sdk_sha256='a85f65de418a8e6a898c6c3e3c870d50fff7618a200e4dd59ea9692af6ecec4d',
     source_hashes={p.relative_to(ROOT).as_posix(): hashlib.sha256(p.read_bytes()).hexdigest()

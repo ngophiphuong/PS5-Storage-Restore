@@ -6,7 +6,17 @@ Restores the registration of PS5 games already installed on internal storage and
 
 **Copyright NGÔ PHI PHƯƠNG x PSVIETHOA.COM**
 
-Download: [Releases](../../releases) — `PS5_STORAGE_RESTORE.elf`, SHA256 `35d88926d143097136898ee2318c63f313992c1bb394df78f306cd49e390d5e2`.
+Download: [Releases](../../releases) — `PS5_STORAGE_RESTORE.elf`, SHA256 `d61a3864e647f09965aa0d0675b99f0b5110fbe52bdf5b6ee6db7dd5dd25f2f7`.
+
+## What fix 1.4 changes
+
+- `contentVersion` is no longer part of the identity check. Only `titleId` and `contentId` must match exactly; the `param.json` inside `app.pkg` owns `contentVersion`.
+- A `sce_sys/param.json` sidecar older than the package is synced forward. A package older than the sidecar is refused (`param-content-version-older-in-package`) — never a downgrade.
+- An unparsable `contentVersion` is refused on its own (`param-content-version-invalid`) instead of being folded into the identity failure.
+- New log line `PARAM_VERSION path=... existing=... package=...` on every sync.
+- The identity failure reason is renamed to `param-title-or-content-id-mismatch-or-invalid`.
+
+Why: 1.3 required `contentVersion` to be equal, but that is precisely the field a game update changes. On the test console ASTRO BOT PPSA21567 was updated 01.018.000 → 01.019.000 on 2026-10-07; `app.pkg` and both appmeta copies moved to 01.019.000 while the M.2 `sce_sys/param.json` stayed at 01.018.000, so 1.3 skipped the title.
 
 ## What fix 1.3 changes
 
@@ -27,8 +37,9 @@ FF7 Rebirth used to be skipped because its stale sidecar `param.json` differed f
 | `src/pkg_reader.h` | FIH/CNT parser and metadata-table validation |
 | `src/restore_metadata.h` | Streaming, comparison, backup and `param.json` replacement |
 | `build.py` | PS5 cross-build on Windows with LLVM/LLD |
-| `tests/` | 23 parser + 14 metadata tests on synthetic data |
-| `verification/console-summary-1.3.json` | Observed results; contains no private database or log |
+| `tests/` | 23 parser + 23 metadata tests on synthetic data |
+| `verification/console-summary-1.4.json` | Observed 1.4 results; contains no private database or log |
+| `verification/console-summary-1.3.json` | The 1.3 results, kept for comparison |
 
 ## Standalone build on Windows
 
@@ -52,21 +63,25 @@ python tests/test_parser.py
 python tests/test_metadata.py
 ```
 
-The public suite covers 23 parser cases and 14 metadata cases: the maximum UINT32 size against a synthetic extent, out-of-range checks, JSON larger than 2 MiB, streaming a 65 MiB file plus an odd trailing chunk, byte-exact backup, write/rename failures, and a second run that writes nothing more.
+The public suite covers 23 parser cases and 23 metadata cases: the maximum UINT32 size against a synthetic extent, out-of-range checks, JSON larger than 2 MiB, streaming a 65 MiB file plus an odd trailing chunk, byte-exact backup, write/rename failures, a second run that writes nothing more, and the 1.4 `contentVersion` group: syncing forward, refusing a downgrade, a downgrade in a later group, a version written in fewer groups, and six unparsable version strings.
 
 ## Running it on the PS5
 
 Close every game and wait for installs and updates to finish. Copy the ELF to `/data/ps5_storage_restore/` and run it once, after the payload environment and the M.2 drive are ready. Open the game library to check the result. Log: `/data/ps5_storage_restore/restore.log`; param backups: `/data/ps5_storage_restore/backups/`.
 
-The log must contain `START version=1.3-EN-VI-streaming`, one `REGISTER <title> rc=0x00000000` per title, and a final `END` line. The M.2 mount has to be recreated after every reboot; Recovery can be placed in an existing autoload chain after the platform payload and once the drive is ready. Keep exactly one Recovery entry. Do not copy an example configuration over the console's whole autoload setup.
+The log must contain `START version=1.4-EN-VI-streaming`, one `REGISTER <title> rc=0x00000000` per title, and a final `END` line. The M.2 mount has to be recreated after every reboot; Recovery can be placed in an existing autoload chain after the platform payload and once the drive is ready. Keep exactly one Recovery entry. Do not copy an example configuration over the console's whole autoload setup.
 
 The payload handles installed FIH/CNT packages. It does not undelete data and does not format a drive. A destination directory that is occupied or carries no ownership marker is skipped; the payload never hides that data by itself. If a stale metadata directory has to be dealt with, verify its identity and then preserve it with a rename on the same filesystem before running again. Details in [docs/RECOVERY.en.md](docs/RECOVERY.en.md).
 
 ## Observed verification
 
-Standalone 1.3 ran on a PS5 Pro, firmware 10.01, on 2026-10-01: **21/21 titles registered, skipped=0**. FF7 Rebirth PPSA08668 and Spider-Man Remastered PPSA01467 both returned `rc=0x00000000` in `external-nullfs` mode; the param file matched the package in all three locations and both databases reported `integrity_check=ok`. The icon tables of three users recorded `visible=1` / `installStatus=2`. The `app.pkg` alias matched the size and header of the M.2 source.
+Standalone **1.4** ran on a PS5 Pro, firmware 10.01, on 2026-10-10: **21/21 titles registered, skipped=0, created=6, updated=1**. The ELF of that run was built from exactly the source in this repository, SHA256 `d61a3864e647f09965aa0d0675b99f0b5110fbe52bdf5b6ee6db7dd5dd25f2f7`.
 
-The ELF used for that run, built before the copyright line was edited, has SHA256 `9eab8e6d5bfb5147e4428ed145b676a861a979fc5869f8a67afd6ccd21841f9e`. Mounting and registration were confirmed on the console; the icon on the TV, launching a game and a reboot were **not** observed. The published source changes the copyright line to NGÔ PHI PHƯƠNG x PSVIETHOA.COM and keeps the fix logic unchanged; the ELF built from this source has only been verified offline. The project's private data set also passed 9 extra parser fixtures and 2 real-package replays; no game data is included in this public repository.
+ASTRO BOT PPSA21567 is the title 1.3 skipped. Under 1.4: `PARAM_VERSION existing=01.018.000 package=01.019.000 package-newer`, then `REGISTER rc=0x00000000 mode=external-nullfs`. The `param.json` in all three locations (`sce_sys` on the M.2, `/user/appmeta`, `/system_data/priv/appmeta`) is byte-identical to the `param.json` inside `app.pkg`; the byte-exact backup of the old 01.018.000 file is kept in `/data/ps5_storage_restore/backups/`. The alias `/user/app/PPSA21567/app.pkg` matches the size of the M.2 source. `app.db` and `appinfo.db` both reported `integrity_check=ok` before and after. No other title's param file changed.
+
+**Not observed:** the icon on the TV, launching a game, and a reboot. No step changed autoload, launched a game, or copied a database onto the console.
+
+1.3 ran earlier on the same console on 2026-10-01, also 21/21 with skipped=0, using ELF `9eab8e6d5bfb5147e4428ed145b676a861a979fc5869f8a67afd6ccd21841f9e` built before the copyright line was edited. The project's private data set also passed 9 extra parser fixtures and 2 real-package replays; no game data is included in this public repository.
 
 ## License and related sources
 

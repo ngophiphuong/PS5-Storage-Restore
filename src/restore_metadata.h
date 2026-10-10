@@ -84,9 +84,51 @@ static int restore_title_matches(struct json_object *obj,const char *title) {
     return obj&&json_object_object_get_ex(obj,"titleId",&id)&&json_object_is_type(id,json_type_string)&&
         json_object_get_string_len(id)==(int)strlen(title)&&!strcmp(json_object_get_string(id),title);
 }
-static int restore_identity_matches(struct json_object *a,struct json_object *b) {
-    return restore_string_equal(a,b,"titleId")&&restore_string_equal(a,b,"contentId")&&
-        restore_string_equal(a,b,"contentVersion");
+static int restore_same_content(struct json_object *a,struct json_object *b) {
+    return restore_string_equal(a,b,"titleId")&&restore_string_equal(a,b,"contentId");
+}
+/* Parse a dotted-decimal contentVersion such as "01.019.000" into its groups.
+ * Returns the group count, or 0 when the string is not a plain version. */
+static int restore_version_parse(const char *s,int len,unsigned long *out,int cap) {
+    if(len<=0)return 0;
+    int n=0;long v=-1;
+    for(int i=0;i<=len;i++) {
+        if(i==len||s[i]=='.') {
+            if(v<0||n>=cap)return 0;
+            out[n++]=(unsigned long)v;v=-1;
+            if(i==len)return n;
+            continue;
+        }
+        if(s[i]<'0'||s[i]>'9')return 0;
+        if(v<0)v=0;
+        if(v>99999999L)return 0;
+        v=v*10+(s[i]-'0');
+    }
+    return 0;
+}
+/* Order two contentVersion strings: -2 unusable, -1 a older, 0 equal, 1 a newer.
+ * Absent trailing groups count as zero so "01.019" and "01.019.000" compare equal. */
+static int restore_version_compare(struct json_object *a,struct json_object *b) {
+    struct json_object *x=NULL,*y=NULL;
+    if(!json_object_object_get_ex(a,"contentVersion",&x)||
+       !json_object_object_get_ex(b,"contentVersion",&y))return -2;
+    if(!json_object_is_type(x,json_type_string)||!json_object_is_type(y,json_type_string))return -2;
+    unsigned long p[8],q[8];
+    int np=restore_version_parse(json_object_get_string(x),json_object_get_string_len(x),p,8);
+    int nq=restore_version_parse(json_object_get_string(y),json_object_get_string_len(y),q,8);
+    if(!np||!nq)return -2;
+    for(int i=0;i<(np>nq?np:nq);i++) {
+        unsigned long u=i<np?p[i]:0UL,w=i<nq?q[i]:0UL;
+        if(u!=w)return u<w?-1:1;
+    }
+    return 0;
+}
+static void restore_log_version(const char *path,struct json_object *pkg,struct json_object *old,int order) {
+    struct json_object *x=NULL,*y=NULL;
+    if(!json_object_object_get_ex(pkg,"contentVersion",&x)||
+       !json_object_object_get_ex(old,"contentVersion",&y))return;
+    fprintf(logfile,"PARAM_VERSION path=%s existing=%s package=%s %s\n",path,
+            json_object_get_string(y),json_object_get_string(x),order>0?"package-newer":"same-version");
 }
 static int restore_write_exclusive(const char *path,const RestoreInput *in) {
     int fd=open(path,O_WRONLY|O_CREAT|O_EXCL,0644);if(fd<0)return 0;
@@ -112,7 +154,7 @@ static int restore_write_exclusive(const char *path,const RestoreInput *in) {
 }
 static int restore_temp(const char *path,const RestoreInput *in,char *temp,size_t cap) {
     for(unsigned tries=0;tries<100;tries++) {
-        int n=snprintf(temp,cap,"%s.restore-1.3-%d-%u.tmp",path,getpid(),++temp_serial);
+        int n=snprintf(temp,cap,"%s.restore-1.4-%d-%u.tmp",path,getpid(),++temp_serial);
         if(n<0||(size_t)n>=cap){errno=ENAMETOOLONG;return 0;}
         if(restore_write_exclusive(temp,in))return 1;
         if(errno!=EEXIST)return 0;
@@ -149,9 +191,16 @@ static int restore_stage(const char *path,const RestoreInput *in,int write_it,in
         old_file=fopen(path,"rb");if(!old_file)return restore_fail(path,"open-existing-param",errno);
         old=(RestoreInput){old_file,0,(uint64_t)st.st_size};
         struct json_object *obj=restore_json(&old);
-        int same=obj&&restore_identity_matches(obj,expected);
+        /* Same game only: titleId and contentId must match exactly. The package
+         * owns contentVersion, which a game update legitimately raises, so an
+         * older sidecar is synced and only a downgrade is refused. */
+        int same=obj&&restore_same_content(obj,expected);
+        int order=same?restore_version_compare(expected,obj):-2;
+        if(same&&order>=0)restore_log_version(path,expected,obj,order);
         if(obj)json_object_put(obj);
-        if(!same){restore_fail(path,"param-title-content-version-mismatch-or-invalid",EINVAL);goto done;}
+        if(!same){restore_fail(path,"param-title-or-content-id-mismatch-or-invalid",EINVAL);goto done;}
+        if(order==-2){restore_fail(path,"param-content-version-invalid",EINVAL);goto done;}
+        if(order<0){restore_fail(path,"param-content-version-older-in-package",EINVAL);goto done;}
         changed=1;
     }
     if(!write_it){good=1;goto done;}
