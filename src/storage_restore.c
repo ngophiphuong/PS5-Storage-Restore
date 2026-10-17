@@ -1,4 +1,4 @@
-/* PS5 Storage Restore 1.4 EN/VI. Existing installed FIH PKGs only.
+/* PS5 Storage Restore 1.8 EN/VI. Existing installed FIH PKGs only.
  * Copyright (c) 2026 NGÔ PHI PHƯƠNG x PSVIETHOA.COM
  * SPDX-License-Identifier: GPL-3.0-only */
 #include "pkg_reader.h"
@@ -75,6 +75,7 @@ static int stage_file(const char *path,const unsigned char *b,size_t n,int write
     unlink(temp);return success;
 }
 #include "restore_metadata.h"
+#include "restore_native.h"
 static int marker_matches(const char *marker,const char *source) {
     char b[320];FILE *f=fopen(marker,"rb");if(!f)return 0;
     size_t n=fread(b,1,sizeof(b)-1,f);fclose(f);b[n]=0;
@@ -137,7 +138,19 @@ static void process_title(const char *root,const char *id,int internal) {
             (!trophy_item(item->name)||restore_stage(d,&in,pass,is_param,param_obj,id,"sysmeta"));
         if(!good){fprintf(logfile,"SKIP metadata failed %s %s (see METADATA_FAILED)\n",id,item->name);goto done;}
     }
+    /* AppInst refuses to install a title at /user/app once appinfo records a
+     * device path for it (0x80f50004), so the database decides what is needed:
+     * a title that already has a row only needs its two location fields set,
+     * and the alias is not created at all. The alias plus AppInst route is for
+     * a title with no row yet, which is the case after the database is lost. */
+    int have_row=0;
     if(!internal) {
+        char org[256]={0};
+        have_row=native_row_state(id,org,sizeof(org));
+        if(have_row<0){fprintf(logfile,"SKIP cannot read appinfo for %s\n",id);goto done;}
+        if(have_row)fprintf(logfile,"DB_ROW %s _org_path=%s\n",id,org);
+    }
+    if(!internal&&!have_row) {
         /* Record ownership before creating an alias; never replace another source. */
         char line[320];snprintf(line,sizeof(line),"%s\n",source);
         if(!stage_file(marker,(unsigned char *)line,strlen(line),1,0)) {fprintf(logfile,"SKIP marker conflict/write failure %s errno=%d\n",id,errno);goto done;}
@@ -152,9 +165,16 @@ static void process_title(const char *root,const char *id,int internal) {
             new_mount=1;
         }
     }
-    int rc=register_title(id,"/user/app/",NULL);
-    fprintf(logfile,"REGISTER %s rc=0x%08x mode=%s\n",id,rc,internal?"internal-direct":"external-nullfs");
-    success=rc==0||(unsigned)rc==0x80990002u;
+    if(internal||!have_row) {
+        int rc=register_title(id,"/user/app/",NULL);
+        fprintf(logfile,"REGISTER %s rc=0x%08x mode=%s\n",id,rc,internal?"internal-direct":"external-nullfs");
+        success=rc==0||(unsigned)rc==0x80990002u;
+    }else {
+        fprintf(logfile,"REGISTER %s already present, only the location is rewritten\n",id);
+        success=1;
+    }
+    /* Queue the device path rewrite; the alias is dropped only after it verifies. */
+    if(success&&!internal)native_remember(id,source);
 done:
     if(param_obj)json_object_put(param_obj);
     if(p.file)fclose(p.file);
@@ -181,7 +201,7 @@ int main(void) {
     int lock=open(STATE "/running.lock",O_RDWR|O_CREAT,0600);
     if(lock<0||flock(lock,LOCK_EX|LOCK_NB)){if(lock>=0)close(lock);notice(tr("Đang có phiên chạy khác hoặc không khóa được phiên.","Another instance is running or the session lock is unavailable."));return 1;}
     logfile=fopen(STATE "/restore.log","a");if(!logfile){close(lock);notice(tr("Không mở được file nhật ký.","Cannot open log file."));return 1;}
-    fprintf(logfile,"START version=1.4-EN-VI-streaming pid=%d\nCopyright NGÔ PHI PHƯƠNG x PSVIETHOA.COM\nLANG system=%d rc=0x%08x selected=%s\n",getpid(),system_language,lang_rc,vietnamese?"vi":"en");fflush(logfile);
+    fprintf(logfile,"START version=1.8-EN-VI-native pid=%d\nCopyright NGÔ PHI PHƯƠNG x PSVIETHOA.COM\nLANG system=%d rc=0x%08x selected=%s\n",getpid(),system_language,lang_rc,vietnamese?"vi":"en");fflush(logfile);
     notice(tr("Đang quét game trên bộ nhớ trong và SSD M.2...","Scanning games on internal storage and M.2 SSD..."));
     uint64_t prior=kernel_get_ucred_authid(-1);kernel_set_ucred_authid(-1,0x4800000000000006ULL);
     void *h=dlopen("/system/common/lib/libSceAppInstUtil.sprx",RTLD_LAZY);
@@ -194,6 +214,7 @@ int main(void) {
     /* Direct internal installs win if a title also exists on another drive. */
     scan("/user/app",1);
     for(unsigned n=0;n<16;n++){char root[64];snprintf(root,sizeof(root),"/mnt/ext%u/user/app",n);scan(root,0);}
+    native_apply();
     char message[256];snprintf(message,sizeof(message),tr(
         "Đã đăng ký %u/%u game/ứng dụng. Bỏ qua: %u.\nMở Thư viện trò chơi để kiểm tra.",
         "Registered %u/%u games/apps. Skipped: %u.\nOpen Game Library to check."),ok,found,skipped);notice(message);

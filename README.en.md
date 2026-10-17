@@ -6,7 +6,22 @@ Restores the registration of PS5 games already installed on internal storage and
 
 **Copyright NGÔ PHI PHƯƠNG x PSVIETHOA.COM**
 
-Download: [Releases](../../releases) — `PS5_STORAGE_RESTORE.elf`, SHA256 `d61a3864e647f09965aa0d0675b99f0b5110fbe52bdf5b6ee6db7dd5dd25f2f7`.
+Download: [Releases](../../releases) — `PS5_STORAGE_RESTORE.elf`, SHA256 `17eabf322889f4ad5edf8577192f43b256dda440dfb15463981d7efa1e01db95`.
+
+## What fix 1.8 changes
+
+One run is enough; it no longer has to be repeated at every boot.
+
+The nullfs alias used by earlier releases records `_org_path = /user/app/<id>` in `appinfo.db`. That path only exists while the alias is mounted, the mount does not survive a reboot and nothing recreates it, so the next boot reports the data as corrupt until Recovery runs again. A title placed by the package installer records the real device path plus `_m2_device_id=1` instead, and keeps working across reboots untouched.
+
+- 1.8 writes those two fields directly into `appinfo.db`: `_org_path` becomes `/mnt/extN/user/app/<id>` and `_m2_device_id` becomes 1.
+- The database is consulted first: a title that already has a row gets **no** alias and no AppInst call, only the location fields. A title with no row yet, which is the case after the database is lost, still goes through the alias plus AppInst route to create one.
+- A byte copy of `appinfo.db` is written to `/data/ps5_storage_restore/backups/appinfo-<pid>.db` before any write; if the copy fails, nothing is written.
+- `PRAGMA integrity_check` runs before and after. Only existing rows are updated - no inserts, no deletes, no other column touched.
+- `_org_path` is read back after writing; a mismatch leaves that title exactly as it was.
+- The mounted alias and the `/user/app/<id>` directory are **not touched**. The alias becomes redundant at the next boot.
+
+`sceAppInstUtilAppInstallTitleDir` is not used with the device base: it accepts the argument, returns `0x00000000` and changes nothing, confirmed by calling it and then rebooting. Called once `appinfo` holds a device path it returns `0x80f50004`.
 
 ## What fix 1.4 changes
 
@@ -36,6 +51,7 @@ FF7 Rebirth used to be skipped because its stale sidecar `param.json` differed f
 | `src/storage_restore.c` | Standalone payload: scan, mount, register and notify |
 | `src/pkg_reader.h` | FIH/CNT parser and metadata-table validation |
 | `src/restore_metadata.h` | Streaming, comparison, backup and `param.json` replacement |
+| `src/restore_native.h` | Writes `_org_path`/`_m2_device_id` into `appinfo.db`, with backup and verification |
 | `build.py` | PS5 cross-build on Windows with LLVM/LLD |
 | `tests/` | 23 parser + 23 metadata tests on synthetic data |
 | `verification/console-summary-1.4.json` | Observed 1.4 results; contains no private database or log |
@@ -43,7 +59,7 @@ FF7 Rebirth used to be skipped because its stale sidecar `param.json` differed f
 
 ## Standalone build on Windows
 
-Requires Python 3.12+, LLVM/Clang, `ld.lld` and `llvm-strip` on PATH, plus a PS5 payload SDK that provides static json-c. The SDK used here: pacbrew-repo v0.40.2, asset `ps5-payload-dev.tar.gz`, SHA256 `a85f65de418a8e6a898c6c3e3c870d50fff7618a200e4dd59ea9692af6ecec4d`.
+Requires Python 3.12+, LLVM/Clang, `ld.lld` and `llvm-strip` on PATH, plus a PS5 payload SDK that provides static json-c and sqlite3 (`libjson-c.a`, `libsqlite3.a`). The SDK used here: pacbrew-repo v0.40.2, asset `ps5-payload-dev.tar.gz`, SHA256 `a85f65de418a8e6a898c6c3e3c870d50fff7618a200e4dd59ea9692af6ecec4d`.
 
 ```powershell
 $env:PS5_SDK = 'C:\ps5-payload-sdk'
@@ -69,11 +85,23 @@ The public suite covers 23 parser cases and 23 metadata cases: the maximum UINT3
 
 Close every game and wait for installs and updates to finish. Copy the ELF to `/data/ps5_storage_restore/` and run it once, after the payload environment and the M.2 drive are ready. Open the game library to check the result. Log: `/data/ps5_storage_restore/restore.log`; param backups: `/data/ps5_storage_restore/backups/`.
 
-The log must contain `START version=1.4-EN-VI-streaming`, one `REGISTER <title> rc=0x00000000` per title, and a final `END` line. The M.2 mount has to be recreated after every reboot; Recovery can be placed in an existing autoload chain after the platform payload and once the drive is ready. Keep exactly one Recovery entry. Do not copy an example configuration over the console's whole autoload setup.
+The log must contain `START version=1.8-EN-VI-native`, one `REGISTER <title> rc=0x00000000` per title, and a final `END` line. The M.2 mount has to be recreated after every reboot; Recovery can be placed in an existing autoload chain after the platform payload and once the drive is ready. Keep exactly one Recovery entry. Do not copy an example configuration over the console's whole autoload setup.
 
 The payload handles installed FIH/CNT packages. It does not undelete data and does not format a drive. A destination directory that is occupied or carries no ownership marker is skipped; the payload never hides that data by itself. If a stale metadata directory has to be dealt with, verify its identity and then preserve it with a rename on the same filesystem before running again. Details in [docs/RECOVERY.en.md](docs/RECOVERY.en.md).
 
 ## Observed verification
+
+Writing the two location fields was verified on a PS5 Pro, firmware 10.01: after `_org_path` for twenty M.2 titles was changed to `/mnt/ext1/user/app/<id>` and `_m2_device_id` to 1, a power cycle kept all twenty values and the games launched **with no payload run at boot**. `integrity_check` on both `app.db` and `appinfo.db` reported ok.
+
+1.8 performs exactly those two writes. The run on 2026-10-18, with ELF SHA256 `17eabf322889f4ad5edf8577192f43b256dda440dfb15463981d7efa1e01db95`:
+
+```
+END registered=22 found=22 skipped=0 created=0 updated=0
+NATIVE_SUMMARY applied=20 kept=0
+DB_INTEGRITY ok        (before and after writing)
+```
+
+**Not observed:** the post-reboot result of the state 1.8 itself wrote, and the "no row in the database" branch - the very case of a lost database this payload exists for. Every title on the test console already had a row, so that branch has never run. The icon on the TV, launching a game and a reboot have not been confirmed for 1.8 specifically.
 
 Standalone **1.4** ran on a PS5 Pro, firmware 10.01, on 2026-10-10: **21/21 titles registered, skipped=0, created=6, updated=1**. The ELF of that run was built from exactly the source in this repository, SHA256 `d61a3864e647f09965aa0d0675b99f0b5110fbe52bdf5b6ee6db7dd5dd25f2f7`.
 
