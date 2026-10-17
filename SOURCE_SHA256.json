@@ -8,8 +8,8 @@
   "LICENSE": "3972dc9744f6499f0f9b2dbf76696f2ae7ad8af9b23dde66d6af86c9dfb36986",
   "licenses/json-c-COPYING.txt": "74c1e6ca5eba76b54d0ad00d4815c8315c1b3bc45ff99de61d103dc92486284c",
   "licenses/PS5-SDK-LICENSE.txt": "230184f60bae2feaf244f10a8bac053c8ff33a183bcc365b4d8b876d2b7f4809",
-  "README.en.md": "08c80ed20df7d1729ba51c8b295a29e2ea6bf81b040cc043989b2777c0ef3ced",
-  "README.md": "0a9e8caf61060701cc301dc47a03da7e2a85a35b537e69fa4cc52818e0927f0d",
+  "README.en.md": "c616240476a4a097e48c382a2a5f8f27f78b30415e773d740641ad566026278e",
+  "README.md": "fc568ddd738de548306d68189c914d75589b878e31de12924892e0b31cf2a289",
   "src/pkg_reader.h": "40eed37d41b4a3792e044714106754d7509b3fa28e5fcfc31aa8c8da30853ed9",
   "src/restore_metadata.h": "7b6f2dd3a8528e1a6b3e0ba9ab4699acdf7b613b130182dec477fdb70f6aff79",
   "src/restore_native.h": "d68b994215c97c0c47c7328c21c4773bdb952c84130ebc63235ca053900c21fe",
@@ -26,5 +26,6 @@
   "tests/test_parser.py": "c3f6b0a1ad4e668cd2aefc0328cf89a6fbc6859bee3d338128a6060b53bd53b4",
   "THIRD_PARTY_NOTICES.md": "917a32e2cec396fc3a759499a7fec4d172a84fd5debce1edec909f6ab0377f2c",
   "verification/console-summary-1.3.json": "feddd3671f5eb3513dc5889a0857932b4679dcd129fdc068a992f67636e724c8",
-  "verification/console-summary-1.4.json": "4cdc26e40c7eb31da05944080ff15add79e98e057e28393202e90cb5656f36bc"
+  "verification/console-summary-1.4.json": "4cdc26e40c7eb31da05944080ff15add79e98e057e28393202e90cb5656f36bc",
+  "verification/console-summary-1.8.json": "fc5ee1cbfed8eece380da41ca5d17a7ef1e4c2c4523e0946ae50493d20886e54"
 }

@@ -1,0 +1,56 @@
+{
+  "copyright": "NGÔ PHI PHƯƠNG x PSVIETHOA.COM",
+  "scope": "Recovery fix 1.8 only",
+  "console_verification": {
+    "version": "1.8-EN-VI-native-dbonly",
+    "elf_sha256": "17eabf322889f4ad5edf8577192f43b256dda440dfb15463981d7efa1e01db95",
+    "elf_bytes": 1343536,
+    "elf_built_from_this_source": true,
+    "console_runtime_verified": true,
+    "registered": 22,
+    "found": 22,
+    "skipped": 0,
+    "created": 0,
+    "updated": 0,
+    "native_applied": 20,
+    "native_kept": 0,
+    "database_integrity": {
+      "app.db": "ok",
+      "appinfo.db": "ok"
+    },
+    "integrity_checked_before_and_after_write": true,
+    "survives_power_cycle": true,
+    "payload_run_at_boot": false,
+    "aliases_mounted_after_boot": 0,
+    "titles_native_after_boot": 21,
+    "game_launch_verified": true,
+    "ui_screenshot_verified": false,
+    "autoload_modified": false,
+    "tested_on": "PS5 Pro, firmware 10.01",
+    "tested_at": "2026-10-18",
+    "what_changed_per_title": [
+      "_org_path -> /mnt/ext1/user/app/<id>",
+      "_m2_device_id -> 1"
+    ],
+    "left_untouched": [
+      "the mounted nullfs alias",
+      "/user/app/<id>",
+      "every other appinfo column",
+      "app.db"
+    ]
+  },
+  "rejected_approaches": {
+    "sceAppInstUtilAppInstallTitleDir with the device base": "returns 0x00000000 and changes nothing; confirmed by calling it and then rebooting. Returns 0x80f50004 once appinfo holds a device path.",
+    "sceAppInstUtilAppRecoverApp": "returns 0x00000000 and leaves both databases byte-identical.",
+    "removing /user/app/<id> after the rewrite": "breaks the title; the directory is now left alone."
+  },
+  "not_verified": {
+    "no_row_branch": "The alias plus AppInst path for a title with no appinfo row has never run: every title on the test console already had a row. This is the actual lost-database case.",
+    "ui_screenshot": "The icon on the TV was not captured."
+  },
+  "public_reproducible_checks": {
+    "synthetic_parser": 23,
+    "synthetic_metadata": 23
+  },
+  "privacy": "No database, console log, token, game file or extracted game metadata is included in this repository."
+}

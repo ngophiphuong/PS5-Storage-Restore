@@ -54,6 +54,7 @@ FF7 Rebirth used to be skipped because its stale sidecar `param.json` differed f
 | `src/restore_native.h` | Writes `_org_path`/`_m2_device_id` into `appinfo.db`, with backup and verification |
 | `build.py` | PS5 cross-build on Windows with LLVM/LLD |
 | `tests/` | 23 parser + 23 metadata tests on synthetic data |
+| `verification/console-summary-1.8.json` | Observed 1.8 results |
 | `verification/console-summary-1.4.json` | Observed 1.4 results; contains no private database or log |
 | `verification/console-summary-1.3.json` | The 1.3 results, kept for comparison |
 

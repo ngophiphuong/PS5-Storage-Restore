@@ -54,6 +54,7 @@ FF7 Rebirth bị bỏ qua vì `param.json` sidecar cũ khác package. Spider-Man
 | `src/restore_native.h` | Ghi `_org_path`/`_m2_device_id` vào `appinfo.db` kèm backup và kiểm tra |
 | `build.py` | Cross-build PS5 trên Windows với LLVM/LLD |
 | `tests/` | 23 parser + 23 metadata test dùng dữ liệu giả lập |
+| `verification/console-summary-1.8.json` | Kết quả 1.8 đã quan sát |
 | `verification/console-summary-1.4.json` | Kết quả 1.4 đã quan sát, không chứa database/log riêng |
 | `verification/console-summary-1.3.json` | Kết quả 1.3, giữ lại để đối chiếu |
 
