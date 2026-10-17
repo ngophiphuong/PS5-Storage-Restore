@@ -154,7 +154,7 @@ static int restore_write_exclusive(const char *path,const RestoreInput *in) {
 }
 static int restore_temp(const char *path,const RestoreInput *in,char *temp,size_t cap) {
     for(unsigned tries=0;tries<100;tries++) {
-        int n=snprintf(temp,cap,"%s.restore-1.4-%d-%u.tmp",path,getpid(),++temp_serial);
+        int n=snprintf(temp,cap,"%s.restore-1.6-%d-%u.tmp",path,getpid(),++temp_serial);
         if(n<0||(size_t)n>=cap){errno=ENAMETOOLONG;return 0;}
         if(restore_write_exclusive(temp,in))return 1;
         if(errno!=EEXIST)return 0;
