@@ -1,4 +1,4 @@
-# PS5 Storage Restore 1.8
+# PS5 Storage Restore 1.9
 
 [Tiếng Việt](README.md) · **English**
 
@@ -7,7 +7,7 @@ Rebuilds the registration of PS5 games installed on an M.2 SSD or internal stora
 **Copyright NGÔ PHI PHƯƠNG x PSVIETHOA.COM** — GPL-3.0-only
 
 **Download:** [Releases](../../releases) — `PS5_STORAGE_RESTORE.elf`
-SHA256 `17eabf322889f4ad5edf8577192f43b256dda440dfb15463981d7efa1e01db95`
+SHA256 `83daa52e684054d810a0cb7fe3af37ed4220629a5cfd80e430a7acd502ee00f6`
 
 ## One run is enough
 
@@ -28,7 +28,7 @@ The system mounts the device path itself at boot. Run it once — **no autoload 
 2. Copy the ELF to `/data/ps5_storage_restore/` and run it once, after the payload environment and the M.2 drive are ready.
 3. Open the game library to check.
 
-Log: `/data/ps5_storage_restore/restore.log`. It must contain `START version=1.8-EN-VI-native`, the `NATIVE <title> _org_path=/mnt/extN/...` lines, `DB_INTEGRITY ok` twice, and `END`.
+Log: `/data/ps5_storage_restore/restore.log`. It must contain `START version=1.9-EN-VI-native`, the `NATIVE <title> _org_path=/mnt/extN/...` lines, `DB_INTEGRITY ok` twice, and `END`.
 
 If `NATIVE_ABORT` or `NATIVE_FAILED` appears the database was **not** modified — restoring the copy from `/data/ps5_storage_restore/backups/` is enough.
 
@@ -75,21 +75,25 @@ python tests\test_metadata.py
 
 ## Verification
 
-Ran on a PS5 Pro, firmware 10.01, on 2026-10-18:
+Ran on a PS5 Pro, firmware 10.01, on 2026-11-14:
 
 ```
-END registered=22 found=22 skipped=0
-NATIVE_SUMMARY applied=20 kept=0
+END registered=40 found=42 skipped=2 created=19
+NATIVE_SUMMARY applied=38 kept=0
 DB_INTEGRITY ok (before and after)
 ```
 
-After a full power cycle: 0/22 aliases mounted, **20/20 titles kept the device path and launched, with no payload run at boot**. `app.db` and `appinfo.db` integrity ok.
+1.8 produced `registered=12 found=42 skipped=30` on the same console. Its destination guard required **both** an ownership marker **and** an empty directory, and `/data/ps5_storage_restore/owned/` had been cleared, so every leftover mount point under `/user/app/` was permanently unusable - 28 of the 30 cases were empty directories. 1.9 accepts an empty directory; only one that still holds files has to be ours.
 
-**Not verified:** the "no row in the database" branch — the very lost-database case this payload exists for. Every title on the test console already had a row, so that branch has never run.
+The two titles still skipped have a real `icon0.png` and `sce_sys` in `/user/app/<id>`; refusing them is correct, handle those per [docs/RECOVERY.en.md](docs/RECOVERY.en.md).
+
+The device-path behaviour was confirmed by the run on 2026-10-18: after a full power cycle, 0/22 aliases mounted and **20/20 titles kept the device path and launched, with no payload run at boot**.
+
+**Not verified:** a reboot after the 1.9 run.
 
 **Not supported:** PS4 fPKG (`CUSAxxxxx`). The title filter only accepts `PPSA`, and PS4 titles have no `sce_sys`, so the current metadata pipeline does not apply.
 
-Per-run detail, including the approaches tried and rejected, is in `verification/console-summary-*.json`.
+Per-run detail is in `verification/console-summary-*.json`.
 
 ## License
 

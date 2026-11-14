@@ -1,0 +1,46 @@
+{
+  "copyright": "NGÔ PHI PHƯƠNG x PSVIETHOA.COM",
+  "scope": "Recovery fix 1.9 only",
+  "console_verification": {
+    "version": "1.9-EN-VI-native-dbonly",
+    "elf_sha256": "83daa52e684054d810a0cb7fe3af37ed4220629a5cfd80e430a7acd502ee00f6",
+    "elf_bytes": 1343536,
+    "elf_built_from_this_source": true,
+    "console_runtime_verified": true,
+    "registered": 40,
+    "found": 42,
+    "skipped": 2,
+    "created": 19,
+    "updated": 0,
+    "native_applied": 38,
+    "native_kept": 0,
+    "database_integrity": {
+      "app.db": "ok",
+      "appinfo.db": "ok"
+    },
+    "integrity_checked_before_and_after_write": true,
+    "tested_on": "PS5 Pro, firmware 10.01",
+    "tested_at": "2026-11-14",
+    "reboot_after_this_run_verified": false
+  },
+  "what_1_9_fixes": {
+    "symptom": "1.8 reported registered=12 found=42 skipped=30 on the same console; PRAGMATA PPSA02530 among them, with its 35,776,561,152 byte app.pkg untouched on the M.2 the whole time.",
+    "cause": "The destination guard required an ownership marker AND an empty directory. /data/ps5_storage_restore/owned/ had been cleared, so the marker test could never pass and every leftover empty mount point under /user/app/ was permanently unusable - which is the state a lost database leaves behind.",
+    "measured": "28 of the 30 blocked destinations were empty directories; 0 markers existed.",
+    "change": "An empty directory is accepted regardless of the marker. A directory that still holds files is refused unless the marker proves it is ours.",
+    "result": "registered went from 12/42 to 40/42."
+  },
+  "still_skipped": {
+    "PPSA10665": "/user/app/PPSA10665 holds a real icon0.png and sce_sys",
+    "PPSA01575": "/user/app/PPSA01575 holds a real icon0.png and sce_sys",
+    "handling": "Refusing them is correct - mounting over them would hide that data. See docs/RECOVERY.md."
+  },
+  "not_supported": {
+    "ps4_fpkg": "CUSAxxxxx titles are ignored: the filter only accepts PPSA, and PS4 titles have no sce_sys."
+  },
+  "public_reproducible_checks": {
+    "synthetic_parser": 23,
+    "synthetic_metadata": 23
+  },
+  "privacy": "No database, console log, token, game file or extracted game metadata is included in this repository."
+}

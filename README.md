@@ -1,4 +1,4 @@
-# PS5 Storage Restore 1.8
+# PS5 Storage Restore 1.9
 
 **Tiếng Việt** · [English](README.en.md)
 
@@ -7,7 +7,7 @@ Dựng lại đăng ký game PS5 đã cài trên SSD M.2 và bộ nhớ trong sa
 **Bản quyền NGÔ PHI PHƯƠNG x PSVIETHOA.COM** — GPL-3.0-only
 
 **Tải về:** [Releases](../../releases) — `PS5_STORAGE_RESTORE.elf`
-SHA256 `17eabf322889f4ad5edf8577192f43b256dda440dfb15463981d7efa1e01db95`
+SHA256 `83daa52e684054d810a0cb7fe3af37ed4220629a5cfd80e430a7acd502ee00f6`
 
 ## Chạy một lần là xong
 
@@ -28,7 +28,7 @@ _m2_device_id  -> 1
 2. Chép ELF vào `/data/ps5_storage_restore/`, chạy một lần sau khi môi trường payload và M.2 sẵn sàng.
 3. Mở Thư viện trò chơi kiểm tra.
 
-Log: `/data/ps5_storage_restore/restore.log`. Cần thấy `START version=1.8-EN-VI-native`, các dòng `NATIVE <title> _org_path=/mnt/extN/...`, `DB_INTEGRITY ok` hai lần, và `END`.
+Log: `/data/ps5_storage_restore/restore.log`. Cần thấy `START version=1.9-EN-VI-native`, các dòng `NATIVE <title> _org_path=/mnt/extN/...`, `DB_INTEGRITY ok` hai lần, và `END`.
 
 Thấy `NATIVE_ABORT` hoặc `NATIVE_FAILED` thì database **không bị sửa** — chép bản backup trong `/data/ps5_storage_restore/backups/` về là xong.
 
@@ -75,21 +75,25 @@ python tests\test_metadata.py
 
 ## Kiểm chứng
 
-Chạy trên PS5 Pro FW 10.01, 18/10/2026:
+Chạy trên PS5 Pro FW 10.01, 14/11/2026:
 
 ```
-END registered=22 found=22 skipped=0
-NATIVE_SUMMARY applied=20 kept=0
+END registered=40 found=42 skipped=2 created=19
+NATIVE_SUMMARY applied=38 kept=0
 DB_INTEGRITY ok (truoc va sau)
 ```
 
-Tắt hẳn máy rồi bật lại: alias 0/22, **20/20 game giữ đường dẫn thiết bị và mở được, không chạy payload lúc boot**. `app.db` và `appinfo.db` integrity ok.
+Trước đó bản 1.8 chỉ ra `registered=12 found=42 skipped=30`. Chốt bảo vệ cũ đòi **vừa** có dấu sở hữu **vừa** rỗng, mà `/data/ps5_storage_restore/owned/` đã bị xoá sạch, nên mọi title còn sót thư mục rỗng ở `/user/app/` bị khoá vĩnh viễn — 28 trong 30 ca là thư mục rỗng. 1.9 cho dùng thư mục rỗng; chỉ thư mục còn file mới cần là của mình.
 
-**Chưa kiểm chứng:** nhánh "chưa có hàng trong database" — tức đúng cảnh mất database mà payload này sinh ra để cứu. Máy thử title nào cũng đã có hàng nên nhánh đó chưa chạy lần nào.
+Hai title vẫn bị bỏ qua có `icon0.png` + `sce_sys` thật ở `/user/app/<id>`; từ chối là đúng, xử theo [docs/RECOVERY.md](docs/RECOVERY.md).
+
+Lần chạy 18/10/2026 với bản trước đã xác nhận phần đường dẫn thiết bị: tắt hẳn máy bật lại, alias 0/22, **20/20 game giữ đường dẫn thiết bị và mở được, không chạy payload lúc boot**.
+
+**Chưa kiểm chứng:** reboot sau lần chạy 1.9.
 
 **Chưa hỗ trợ:** fPKG PS4 (`CUSAxxxxx`). Bộ lọc chỉ nhận `PPSA`, và game PS4 không có `sce_sys` nên pipeline metadata hiện tại không áp dụng được.
 
-Chi tiết từng lần chạy, kể cả các cách đã thử và loại, nằm trong `verification/console-summary-*.json`.
+Chi tiết từng lần chạy trong `verification/console-summary-*.json`.
 
 ## Giấy phép
 

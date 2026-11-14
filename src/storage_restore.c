@@ -1,4 +1,4 @@
-/* PS5 Storage Restore 1.8 EN/VI. Existing installed FIH PKGs only.
+/* PS5 Storage Restore 1.9 EN/VI. Existing installed FIH PKGs only.
  * Copyright (c) 2026 NGÔ PHI PHƯƠNG x PSVIETHOA.COM
  * SPDX-License-Identifier: GPL-3.0-only */
 #include "pkg_reader.h"
@@ -111,7 +111,13 @@ static void process_title(const char *root,const char *id,int internal) {
     }
     if(!internal&&!mounted) {
         if(!lstat(dest,&st)) {
-            if(!S_ISDIR(st.st_mode)||!marker_matches(marker,source)||!empty_dir(dest)) {
+            /* An empty directory hides nothing when the alias is mounted over
+             * it, so it is usable whether or not an ownership marker exists.
+             * Requiring the marker as well made every leftover mount point
+             * permanently unusable once the marker directory had been cleared,
+             * which is exactly the state a lost database leaves behind. A
+             * directory that still holds files is refused unless it is ours. */
+            if(!S_ISDIR(st.st_mode)||(!empty_dir(dest)&&!marker_matches(marker,source))) {
                 fprintf(logfile,"SKIP occupied/unowned destination %s\n",dest);goto done;
             }
         }else if(errno!=ENOENT){fprintf(logfile,"SKIP destination inaccessible %s\n",dest);goto done;}
@@ -201,7 +207,7 @@ int main(void) {
     int lock=open(STATE "/running.lock",O_RDWR|O_CREAT,0600);
     if(lock<0||flock(lock,LOCK_EX|LOCK_NB)){if(lock>=0)close(lock);notice(tr("Đang có phiên chạy khác hoặc không khóa được phiên.","Another instance is running or the session lock is unavailable."));return 1;}
     logfile=fopen(STATE "/restore.log","a");if(!logfile){close(lock);notice(tr("Không mở được file nhật ký.","Cannot open log file."));return 1;}
-    fprintf(logfile,"START version=1.8-EN-VI-native pid=%d\nCopyright NGÔ PHI PHƯƠNG x PSVIETHOA.COM\nLANG system=%d rc=0x%08x selected=%s\n",getpid(),system_language,lang_rc,vietnamese?"vi":"en");fflush(logfile);
+    fprintf(logfile,"START version=1.9-EN-VI-native pid=%d\nCopyright NGÔ PHI PHƯƠNG x PSVIETHOA.COM\nLANG system=%d rc=0x%08x selected=%s\n",getpid(),system_language,lang_rc,vietnamese?"vi":"en");fflush(logfile);
     notice(tr("Đang quét game trên bộ nhớ trong và SSD M.2...","Scanning games on internal storage and M.2 SSD..."));
     uint64_t prior=kernel_get_ucred_authid(-1);kernel_set_ucred_authid(-1,0x4800000000000006ULL);
     void *h=dlopen("/system/common/lib/libSceAppInstUtil.sprx",RTLD_LAZY);
